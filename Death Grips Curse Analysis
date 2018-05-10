@@ -35,7 +35,6 @@ lyrics <- albums %>%
   mutate(tracks = map2(artist, album, genius_album)) %>%
   unnest(tracks)
 
-
 tidy_lyrics <- lyrics %>%
   unnest_tokens(word, text)
 
@@ -51,8 +50,6 @@ songs_with_fuck <- tidy_lyrics %>%
   replace(is.na(.), 0) %>%
   arrange(desc(n_fuck))
 
-
-
 songs_with_curses <- tidy_lyrics %>%
   filter(str_detect(word, paste(c("bitch", "fuck", "nigg", "shit"), collapse = "|"))) %>%
   group_by(artist, album, title) %>%
@@ -61,14 +58,8 @@ songs_with_curses <- tidy_lyrics %>%
   replace(is.na(.), 0) %>%
   arrange(desc(n_curse))
 
-
-# need to fix
-songs_without_fuck <- song_list %>%
-  anti_join(songs_with_fuck, by = c("artist", "album", "title"))
-
-# need to fix
-songs_without_curses <- song_list %>%
-  anti_join(songs_with_curses, by = c("artist", "album", "title"))
+songs_with_fuck %>% filter(n_fuck == 0)
+songs_with_curses %>% filter(n_curse == 0)
 
 curses_rate <- tidy_lyrics %>%
   group_by(artist, album, title) %>%
