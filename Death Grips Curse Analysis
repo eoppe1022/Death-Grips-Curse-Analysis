@@ -36,7 +36,7 @@ lyrics <- albums %>%
   unnest(tracks)
 
 tidy_lyrics <- lyrics %>%
-  unnest_tokens(word, text)
+  unnest_tokens(word, lyric)
 
 song_list <- tidy_lyrics %>%
   group_by(artist, album, title) %>%
