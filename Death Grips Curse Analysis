@@ -39,22 +39,22 @@ tidy_lyrics <- lyrics %>%
   unnest_tokens(word, lyric)
 
 song_list <- tidy_lyrics %>%
-  group_by(artist, album, title) %>%
+  group_by(artist, album, track_title) %>%
   summarize()
 
 songs_with_fuck <- tidy_lyrics %>%
   filter(str_detect(word, "fuck")) %>%
-  group_by(artist, album, title) %>%
+  group_by(artist, album, track_title) %>%
   summarize(n_fuck = n()) %>%
-  full_join(song_list, by = c("artist", "album", "title")) %>%
+  full_join(song_list, by = c("artist", "album", "track_title")) %>%
   replace(is.na(.), 0) %>%
   arrange(desc(n_fuck))
 
 songs_with_curses <- tidy_lyrics %>%
   filter(str_detect(word, paste(c("bitch", "fuck", "nigg", "shit"), collapse = "|"))) %>%
-  group_by(artist, album, title) %>%
+  group_by(artist, album, track_title) %>%
   summarize(n_curse = n()) %>%
-  full_join(song_list, by = c("artist", "album", "title")) %>%
+  full_join(song_list, by = c("artist", "album", "track_title")) %>%
   replace(is.na(.), 0) %>%
   arrange(desc(n_curse))
 
@@ -62,17 +62,17 @@ songs_with_fuck %>% filter(n_fuck == 0)
 songs_with_curses %>% filter(n_curse == 0)
 
 curses_rate <- tidy_lyrics %>%
-  group_by(artist, album, title) %>%
+  group_by(artist, album, track_title) %>%
   summarize(n_words = n()) %>%
-  left_join(songs_with_curses, by = c("artist", "album", "title")) %>%
+  left_join(songs_with_curses, by = c("artist", "album", "track_title")) %>%
   replace(is.na(.), 0) %>%
   mutate(curses_per_hundred_words = ((n_curse / n_words) * 100) %>% round(2)) %>%
   arrange(desc(curses_per_hundred_words))
 
 fuck_rate <- tidy_lyrics %>%
-  group_by(artist, album, title) %>%
+  group_by(artist, album, track_title) %>%
   summarize(n_words = n()) %>%
-  left_join(songs_with_fuck, by = c("artist", "album", "title")) %>%
+  left_join(songs_with_fuck, by = c("artist", "album", "track_title")) %>%
   replace(is.na(.), 0) %>%
   mutate(fucks_per_hundred_words = ((n_fuck / n_words) * 100) %>% round(2)) %>%
   arrange(desc(fucks_per_hundred_words))
@@ -95,7 +95,7 @@ songs_with_curses %>%
 songs_with_curses %>% 
   ungroup() %>%
   filter(n_curse >= quantile(n_curse, probs = 0.75)) %>%
-  ggplot(aes(x = reorder(title %>% str_trunc(20), n_curse), y = n_curse, fill = album)) +
+  ggplot(aes(x = reorder(track_title %>% str_trunc(20), n_curse), y = n_curse, fill = album)) +
   geom_col() +
   labs(x = "", y = "# of Curses", title = "Death Grips Songs with Most Curses") +
   scale_fill_wsj(name = "Album") +
@@ -106,7 +106,7 @@ songs_with_curses %>%
 songs_with_fuck %>%
   ungroup() %>%
   filter(n_fuck >= quantile(n_fuck, probs = 0.75)) %>%
-  ggplot(aes(x = title %>% str_trunc(20) %>% reorder(n_fuck), y = n_fuck, fill = album)) +
+  ggplot(aes(x = track_title %>% str_trunc(20) %>% reorder(n_fuck), y = n_fuck, fill = album)) +
   geom_col() +
   labs(x = "", y = "# of 'Fuck' Occurrences", title = "Death Grips Songs with Most 'Fuck' Occurrences") +
   scale_fill_wsj(name = "Album") +
@@ -136,7 +136,7 @@ songs_with_curses %>%
 curses_rate %>%
   ungroup() %>%
   filter(curses_per_hundred_words >= quantile(curses_per_hundred_words, probs = 0.75)) %>%
-  ggplot(aes(x = title %>% str_trunc(20) %>% reorder(curses_per_hundred_words), y = curses_per_hundred_words, fill = album)) +
+  ggplot(aes(x = track_title %>% str_trunc(20) %>% reorder(curses_per_hundred_words), y = curses_per_hundred_words, fill = album)) +
   geom_col() +
   labs(x = "", y = "# of Curses per 100 Words", title = "Death Grips Songs with Highest % of Curses") +
   scale_fill_wsj(name = "Album") +
@@ -146,7 +146,7 @@ curses_rate %>%
 fuck_rate %>%
   ungroup() %>%
   filter(fucks_per_hundred_words >= quantile(fucks_per_hundred_words, probs = 0.75)) %>%
-  ggplot(aes(x = title %>% str_trunc(20) %>% reorder(fucks_per_hundred_words), y = fucks_per_hundred_words, fill = album)) +
+  ggplot(aes(x = track_title %>% str_trunc(20) %>% reorder(fucks_per_hundred_words), y = fucks_per_hundred_words, fill = album)) +
   geom_col() +
   labs(x = "", y = "# of 'Fucks' Said per 100 Words", title = "Death Grips Songs with Highest % of `Fucks`") +
   scale_fill_wsj(name = "Album") +
@@ -178,7 +178,7 @@ fuck_rate %>%
 
 songs_with_curses %>%
   ungroup() %>%
-  ggplot(aes(x = reorder(title %>% str_trunc(20), n_curse), y = n_curse, fill = album)) +
+  ggplot(aes(x = reorder(track_title %>% str_trunc(20), n_curse), y = n_curse, fill = album)) +
   geom_col(width = 0.9, show.legend = FALSE) +
   facet_wrap(~album, ncol = 3, scales = "free") +
   labs(x = "", y = "", title = "Death Grips Songs with Most Curses", subtitle = "# of Curses on X-Axis (different scale for each album)") +
@@ -187,7 +187,7 @@ songs_with_curses %>%
 
 songs_with_fuck %>%
   ungroup() %>%
-  ggplot(aes(x = reorder(title %>% str_trunc(20), n_fuck), y = n_fuck, fill = album)) +
+  ggplot(aes(x = reorder(track_title %>% str_trunc(20), n_fuck), y = n_fuck, fill = album)) +
   geom_col(width = 0.9, show.legend = FALSE) +
   facet_wrap(~album, ncol = 3, scales = "free") +
   labs(x = "", y = "", title = "Death Grips Songs with Most 'Fuck' Occurrences", subtitle = "# of 'Fuck' Occurrences on X-Axis (different scale for each album)") +
@@ -197,7 +197,7 @@ songs_with_fuck %>%
 
 fuck_rate %>%
   ungroup() %>%
-  ggplot(aes(x = reorder(title %>% str_trunc(20), fucks_per_hundred_words), y = fucks_per_hundred_words, fill = album)) +
+  ggplot(aes(x = reorder(track_title %>% str_trunc(20), fucks_per_hundred_words), y = fucks_per_hundred_words, fill = album)) +
   geom_col(width = 0.9, show.legend = FALSE) +
   facet_wrap(~album, ncol = 3, scales = "free") +
   labs(x = "", y = "# of 'Fucks' per 100 Words", title = "Death Grips Songs with Most 'Fuck' Occurrences") +
@@ -207,9 +207,9 @@ fuck_rate %>%
 
 curses_rate %>%
   ungroup() %>%
-  mutate(title = str_trunc(title, 20)) %>%
-  mutate(title = reorder(title, curses_per_hundred_words)) %>%
-  ggplot(aes(x = title, y = curses_per_hundred_words, fill = album)) +
+  mutate(track_title = str_trunc(track_title, 20)) %>%
+  mutate(track_title = reorder(track_title, curses_per_hundred_words)) %>%
+  ggplot(aes(x = track_title, y = curses_per_hundred_words, fill = album)) +
   geom_col(width = 0.9, show.legend = FALSE) +
   facet_wrap(~album, ncol = 3, scales = "free") +
   labs(x = "", y = "# of Curses per 100 Words", title = "Death Grips Songs with Most 'Fuck' Occurrences") +
